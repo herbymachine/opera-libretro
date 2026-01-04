@@ -157,8 +157,8 @@ ifeq ($(HAVE_CHD), 1)
 
     ifneq ($(STATIC_LINKING), 1)
         ifeq ($(SYSTEM_ZSTD), 1)
-            INCFLAGS += $(shell pkg-config --cflags zstd)
-            LIBS += $(shell pkg-config --libs zstd)
+            INCFLAGS += $(shell pkg-config --cflags libzstd)
+            LIBS += $(shell pkg-config --libs libzstd)
         else
             FLAGS += -DZSTD_DISABLE_ASM
             INCFLAGS += $(ZSTD_INCFLAGS)
