@@ -116,33 +116,59 @@ FLAGS += -DTHREADED_DSP
 endif
 
 ifeq ($(HAVE_CHD), 1)
-FLAGS += \
-	-DHAVE_CHD \
-	-DZ7_ST \
-	-DUSE_LIBRETRO_VFS \
-    -DZSTD_DISABLE_ASM
+    FLAGS += \
+        -DHAVE_CHD \
+        -DZ7_ST \
+        -DUSE_LIBRETRO_VFS
 
-INCFLAGS += \
-	-I$(DEPS_DIR)/lzma-25.01/include \
-	-I$(DEPS_DIR)/libchdr/include
+    INCFLAGS += \
+        -I$(DEPS_DIR)/lzma-25.01/include \
+        -I$(DEPS_DIR)/libchdr/include
 
-SOURCES_C += \
-        $(DEPS_DIR)/lzma-25.01/src/Alloc.c \
-        $(DEPS_DIR)/lzma-25.01/src/Bra.c \
-        $(DEPS_DIR)/lzma-25.01/src/Bra86.c \
-        $(DEPS_DIR)/lzma-25.01/src/BraIA64.c \
-        $(DEPS_DIR)/lzma-25.01/src/CpuArch.c \
-        $(DEPS_DIR)/lzma-25.01/src/Delta.c \
-        $(DEPS_DIR)/lzma-25.01/src/LzFind.c \
-        $(DEPS_DIR)/lzma-25.01/src/Lzma86Dec.c \
-        $(DEPS_DIR)/lzma-25.01/src/LzmaDec.c \
-        $(DEPS_DIR)/lzma-25.01/src/LzmaEnc.c \
-        $(DEPS_DIR)/lzma-25.01/src/Sort.c \
-        $(DEPS_DIR)/libchdr/src/libchdr_bitstream.c \
-        $(DEPS_DIR)/libchdr/src/libchdr_cdrom.c \
-        $(DEPS_DIR)/libchdr/src/libchdr_chd.c \
-        $(DEPS_DIR)/libchdr/src/libchdr_flac.c \
-        $(DEPS_DIR)/libchdr/src/libchdr_huffman.c
+    SOURCES_C += \
+            $(DEPS_DIR)/lzma-25.01/src/Alloc.c \
+            $(DEPS_DIR)/lzma-25.01/src/Bra.c \
+            $(DEPS_DIR)/lzma-25.01/src/Bra86.c \
+            $(DEPS_DIR)/lzma-25.01/src/BraIA64.c \
+            $(DEPS_DIR)/lzma-25.01/src/CpuArch.c \
+            $(DEPS_DIR)/lzma-25.01/src/Delta.c \
+            $(DEPS_DIR)/lzma-25.01/src/LzFind.c \
+            $(DEPS_DIR)/lzma-25.01/src/Lzma86Dec.c \
+            $(DEPS_DIR)/lzma-25.01/src/LzmaDec.c \
+            $(DEPS_DIR)/lzma-25.01/src/LzmaEnc.c \
+            $(DEPS_DIR)/lzma-25.01/src/Sort.c \
+            $(DEPS_DIR)/libchdr/src/libchdr_bitstream.c \
+            $(DEPS_DIR)/libchdr/src/libchdr_cdrom.c \
+            $(DEPS_DIR)/libchdr/src/libchdr_chd.c \
+            $(DEPS_DIR)/libchdr/src/libchdr_flac.c \
+            $(DEPS_DIR)/libchdr/src/libchdr_huffman.c
+
+    ZSTD_INCFLAGS  = -I$(DEPS_DIR)/zstd-1.5.7/lib
+    ZSTD_SOURCES_C = \
+        $(DEPS_DIR)/zstd-1.5.7/lib/common/entropy_common.c \
+        $(DEPS_DIR)/zstd-1.5.7/lib/common/error_private.c \
+        $(DEPS_DIR)/zstd-1.5.7/lib/common/fse_decompress.c \
+        $(DEPS_DIR)/zstd-1.5.7/lib/common/zstd_common.c \
+        $(DEPS_DIR)/zstd-1.5.7/lib/common/xxhash.c \
+        $(DEPS_DIR)/zstd-1.5.7/lib/decompress/huf_decompress.c \
+        $(DEPS_DIR)/zstd-1.5.7/lib/decompress/zstd_ddict.c \
+        $(DEPS_DIR)/zstd-1.5.7/lib/decompress/zstd_decompress.c \
+        $(DEPS_DIR)/zstd-1.5.7/lib/decompress/zstd_decompress_block.c
+
+    ifneq ($(STATIC_LINKING), 1)
+        ifeq ($(SYSTEM_ZSTD), 1)
+            INCFLAGS += $(shell pkg-config --cflags zstd)
+            LIBS += $(shell pkg-config --libs zstd)
+        else
+            FLAGS += -DZSTD_DISABLE_ASM
+            INCFLAGS += $(ZSTD_INCFLAGS)
+            SOURCES_C += $(ZSTD_SOURCES_C)
+        endif
+    else
+        FLAGS += -DZSTD_DISABLE_ASM
+        INCFLAGS += $(ZSTD_INCFLAGS)
+        SOURCES_C += $(ZSTD_SOURCES_C)
+    endif
 endif
 
 ZLIB_INCFLAGS  = -I$(DEPS_DIR)/zlib-1.3.1
@@ -165,29 +191,4 @@ ifneq ($(STATIC_LINKING), 1)
 else
     INCFLAGS += $(ZLIB_INCFLAGS)
     SOURCES_C += $(ZLIB_SOURCES_C)
-endif
-
-ZSTD_INCFLAGS  = -I$(DEPS_DIR)/zstd-1.5.7/lib
-ZSTD_SOURCES_C = \
-	$(DEPS_DIR)/zstd-1.5.7/lib/common/entropy_common.c \
-    $(DEPS_DIR)/zstd-1.5.7/lib/common/error_private.c \
-    $(DEPS_DIR)/zstd-1.5.7/lib/common/fse_decompress.c \
-    $(DEPS_DIR)/zstd-1.5.7/lib/common/zstd_common.c \
-    $(DEPS_DIR)/zstd-1.5.7/lib/common/xxhash.c \
-    $(DEPS_DIR)/zstd-1.5.7/lib/decompress/huf_decompress.c \
-    $(DEPS_DIR)/zstd-1.5.7/lib/decompress/zstd_ddict.c \
-    $(DEPS_DIR)/zstd-1.5.7/lib/decompress/zstd_decompress.c \
-    $(DEPS_DIR)/zstd-1.5.7/lib/decompress/zstd_decompress_block.c
-
-ifneq ($(STATIC_LINKING), 1)
-    ifeq ($(SYSTEM_ZSTD), 1)
-        INCFLAGS += $(shell pkg-config --cflags zstd)
-        LIBS += $(shell pkg-config --libs zstd)
-    else
-        INCFLAGS += $(ZSTD_INCFLAGS)
-        SOURCES_C += $(ZSTD_SOURCES_C)
-    endif
-else
-    INCFLAGS += $(ZSTD_INCFLAGS)
-    SOURCES_C += $(ZSTD_SOURCES_C)
 endif
